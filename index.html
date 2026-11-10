@@ -5,7 +5,7 @@
   <meta name="description" content="Explore the writing process with S-notation. Record edits and turn them into numbered insertions, deletions, and breaks.">
   <title>S-notation · A trace of writing</title>
   <link rel="stylesheet" href="styles.css">
-  <script defer src="snotation.js"></script><script defer src="app.js"></script>
+  <script defer src="snotation.js"></script><script defer src="recording.js"></script><script defer src="app.js"></script>
 </head>
 <body>
   <header class="topbar"><a class="brand" href="./"><span class="brand-icon">s<span>₁</span></span> S-notation <span class="brand-note">WRITING PROCESS LAB</span></a><a href="snota.pdf" target="_blank" rel="noopener">Read the specification <span aria-hidden="true">↗</span></a></header>
@@ -22,7 +22,7 @@
           <label class="sr-only" for="editor">Text to write and revise</label>
           <textarea id="editor" placeholder="A thought begins here…" aria-describedby="editor-help" spellcheck="false"></textarea>
           <div class="editor-foot"><span id="char-count">0 characters</span><span id="edit-count">0 revisions recorded</span></div>
-          <button class="primary" id="generate">Generate S-notation <span aria-hidden="true">→</span></button>
+          <button class="primary" id="generate">Generate notation & ledger <span aria-hidden="true">→</span></button>
           <p class="shortcut">or press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> <span>·</span> <button class="text-button" id="example">Try the paper’s example</button></p>
         </section>
         <section class="pane result-pane">
@@ -35,12 +35,18 @@
       </div>
       <div class="status" id="status" role="status" aria-live="polite">Edits are recorded as you write. Generate whenever you’re ready.</div>
     </section>
+    <section class="ledger-section" aria-labelledby="ledger-title">
+      <div class="ledger-heading"><div><div class="eyebrow">THE REVISION DETAILS</div><h2 id="ledger-title">Revision ledger</h2></div><div class="ledger-tools"><button class="text-button" id="scriptlog-example">Load ScriptLog example</button><label class="text-button import-label" for="import-log">Import ScriptLog JSON<input type="file" id="import-log" accept=".json,application/json"></label><button class="text-button" id="ledger-download" disabled>Download CSV ↓</button></div></div>
+      <p class="hint">Character points are final live-text offsets at the break and revision closing marker. Word indexes are 1-based; times are seconds since recording began.</p>
+      <div class="ledger-scroll" role="region" aria-label="Revision ledger table" tabindex="0"><table id="ledger"><caption class="sr-only">Revision positions and writing/navigation timestamps</caption><thead id="ledger-head"></thead><tbody id="ledger-body"><tr><td colspan="9" class="ledger-empty">Generate after revising your text to see the ledger.</td></tr></tbody></table></div>
+      <p class="hint ledger-note">A dash means no navigation was observed or a timestamp is unavailable. Spaces and line breaks separate words; positions in whitespace use the preceding word (or word 1 before the first word). Character offsets use UTF-16, as in ScriptLog and the editor.</p>
+    </section>
     <section class="guide" aria-label="How it works">
       <article><span class="step">01 / CAPTURE</span><h3>Start with a thought.</h3><p>Text written at the end is normal production. It appears without markup.</p></article>
       <article><span class="step">02 / REVISE</span><h3>Change your mind.</h3><p>Insert inside your text or delete a few words. Revisions keep their order, even when nested.</p></article>
       <article><span class="step">03 / EXPLORE</span><h3>Read between the edits.</h3><p>Braces show insertions, brackets preserve deletions, and numbered pipes mark breaks.</p></article>
     </section>
-    <details class="notes"><summary>A note on the notation & implementation</summary><div><p>Based on <a href="snota.pdf">S-Notation Markup Rules, Technical Description, v1.0 (July 7, 2012)</a>, prepared by Eric Van Horenbeeck, Tom Pauwaert, Luuk Van Waes, and Mariëlle Leijten.</p><p>S-notation needs an edit history; a finished text alone cannot reveal its revisions. This demo captures edits made in this editor. Pasting a finished text is normal production until you revise it. Continuous typing or deleting is grouped into a single operation; moving the caret or generating output ends that group. Replacements are a deletion followed by an insertion. Browser undo and redo are recorded as new edits.</p><p>The engine counts only live text for positions, tracks active characters in nested insertions, and applies the PDF’s markup jumping rules. A break is associated with a revision, not with an elapsed-time pause. Plain-text exports use subscripts for revision numbers. Literal braces, brackets, and pipes in your text are escaped with a backslash in exports. Input and history stay in memory and disappear on reload.</p></div></details>
+    <details class="notes"><summary>A note on the notation & implementation</summary><div><p>Based on <a href="snota.pdf">S-Notation Markup Rules, Technical Description, v1.0 (July 7, 2012)</a>, prepared by Eric Van Horenbeeck, Tom Pauwaert, Luuk Van Waes, and Mariëlle Leijten.</p><p>S-notation needs an edit history; a finished text alone cannot reveal its revisions. This demo captures edits made in this editor. Pasting a finished text is normal production until you revise it. Continuous typing or deleting is grouped into a single operation; moving the caret or generating output ends that group. Replacements are a deletion followed by an insertion. Browser undo and redo are recorded as new edits.</p><p>The engine counts only live text for positions, tracks active characters in nested insertions, and applies the PDF’s markup jumping rules. A break is associated with a revision, not with an elapsed-time pause. The ledger uses the final positions of the break and closing marker; later edits can move those points. Live recording starts when the page opens or Start over is clicked. Navigation time is the first observed caret or selection movement since the preceding edit. Imported ScriptLog timestamps retain their original relative times. The paper’s example has no timestamps, so those cells show a dash. Plain-text exports use subscripts for revision numbers. Literal braces, brackets, and pipes in your text are escaped with a backslash in exports. Input and history stay in memory and disappear on reload.</p></div></details>
   </main>
   <footer><span class="footer-brand">s₁ <span>A trace of writing.</span></span><span>HTML + vanilla JavaScript · Based on the 2012 specification</span></footer>
 </body></html>
