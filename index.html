@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Explore the writing process with S-notation. Record edits and turn them into numbered insertions, deletions, and breaks.">
+  <title>S-notation · A trace of writing</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="snotation.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="./"><span class="brand-icon">s<span>₁</span></span> S-notation <span class="brand-note">WRITING PROCESS LAB</span></a><a href="snota.pdf" target="_blank" rel="noopener">Read the specification <span aria-hidden="true">↗</span></a></header>
+  <main>
+    <div class="eyebrow"><span></span> WORDS HAVE A HISTORY</div>
+    <h1>See how your writing<br>comes <em>together.</em></h1>
+    <p class="intro">Every addition, deletion, and change of mind leaves a trace.<br class="desktop"> Turn your writing process into S-notation.</p>
+    <section class="workspace" aria-label="S-notation playground">
+      <div class="workspace-bar"><div><span class="live-dot"></span> THE PLAYGROUND</div><span>Local to this tab · no uploads</span></div>
+      <div class="panes">
+        <section class="pane editor-pane">
+          <div class="pane-title"><h2><span>01</span> Write & revise</h2><button class="text-button" id="reset">Start over ↺</button></div>
+          <p class="hint" id="editor-help">Type a sentence. Then go back and change something.</p>
+          <label class="sr-only" for="editor">Text to write and revise</label>
+          <textarea id="editor" placeholder="A thought begins here…" aria-describedby="editor-help" spellcheck="false"></textarea>
+          <div class="editor-foot"><span id="char-count">0 characters</span><span id="edit-count">0 revisions recorded</span></div>
+          <button class="primary" id="generate">Generate S-notation <span aria-hidden="true">→</span></button>
+          <p class="shortcut">or press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> <span>·</span> <button class="text-button" id="example">Try the paper’s example</button></p>
+        </section>
+        <section class="pane result-pane">
+          <div class="pane-title"><h2><span>02</span> Follow the trace</h2><span class="badge" id="result-badge">READY WHEN YOU ARE</span></div>
+          <p class="hint">Your writing history, woven into one text.</p>
+          <div id="output" class="notation empty" role="region" aria-label="Generated S-notation"><div class="empty-symbol">{ <span>…</span> }<sub>1</sub></div><p>A little writing. A visible process.</p><small>Your S-notation will appear here.</small></div>
+          <div class="result-actions"><span id="result-summary">Waiting for your first words</span><div><button class="text-button" id="copy" disabled>Copy</button><button class="text-button" id="download" disabled>Download ↓</button></div></div>
+          <div class="legend"><span><b class="insert">{text}<sub>1</sub></b> Insertion</span><span><b class="delete">[text]<sub>2</sub></b> Deletion</span><span><b class="break">|<sub>1</sub></b> Break</span></div>
+        </section>
+      </div>
+      <div class="status" id="status" role="status" aria-live="polite">Edits are recorded as you write. Generate whenever you’re ready.</div>
+    </section>
+    <section class="guide" aria-label="How it works">
+      <article><span class="step">01 / CAPTURE</span><h3>Start with a thought.</h3><p>Text written at the end is normal production. It appears without markup.</p></article>
+      <article><span class="step">02 / REVISE</span><h3>Change your mind.</h3><p>Insert inside your text or delete a few words. Revisions keep their order, even when nested.</p></article>
+      <article><span class="step">03 / EXPLORE</span><h3>Read between the edits.</h3><p>Braces show insertions, brackets preserve deletions, and numbered pipes mark breaks.</p></article>
+    </section>
+    <details class="notes"><summary>A note on the notation & implementation</summary><div><p>Based on <a href="snota.pdf">S-Notation Markup Rules, Technical Description, v1.0 (July 7, 2012)</a>, prepared by Eric Van Horenbeeck, Tom Pauwaert, Luuk Van Waes, and Mariëlle Leijten.</p><p>S-notation needs an edit history; a finished text alone cannot reveal its revisions. This demo captures edits made in this editor. Pasting a finished text is normal production until you revise it. Continuous typing or deleting is grouped into a single operation; moving the caret or generating output ends that group. Replacements are a deletion followed by an insertion. Browser undo and redo are recorded as new edits.</p><p>The engine counts only live text for positions, tracks active characters in nested insertions, and applies the PDF’s markup jumping rules. A break is associated with a revision, not with an elapsed-time pause. Plain-text exports use subscripts for revision numbers. Literal braces, brackets, and pipes in your text are escaped with a backslash in exports. Input and history stay in memory and disappear on reload.</p></div></details>
+  </main>
+  <footer><span class="footer-brand">s₁ <span>A trace of writing.</span></span><span>HTML + vanilla JavaScript · Based on the 2012 specification</span></footer>
+</body></html>
