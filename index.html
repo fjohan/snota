@@ -35,10 +35,18 @@
       </div>
       <div class="status" id="status" role="status" aria-live="polite">Edits are recorded as you write. Generate whenever you’re ready.</div>
     </section>
-    <section class="ledger-section" aria-labelledby="ledger-title">
+    <section id="ledger-section" class="ledger-section" aria-labelledby="ledger-title">
       <div class="ledger-heading"><div><div class="eyebrow">THE REVISION DETAILS</div><h2 id="ledger-title">Revision ledger</h2></div><div class="ledger-tools"><button class="text-button" id="scriptlog-example">Load ScriptLog example</button><label class="text-button import-label" for="import-log">Import ScriptLog JSON<input type="file" id="import-log" accept=".json,application/json"></label><button class="text-button" id="ledger-download" disabled>Download CSV ↓</button></div></div>
-      <p class="hint">Character points are final live-text offsets at the break and revision closing marker. Word indexes are 1-based; times are seconds since recording began.</p>
-      <div class="ledger-scroll" role="region" aria-label="Revision ledger table" tabindex="0"><table id="ledger"><caption class="sr-only">Revision positions and writing/navigation timestamps</caption><thead id="ledger-head"></thead><tbody id="ledger-body"><tr><td colspan="9" class="ledger-empty">Generate after revising your text to see the ledger.</td></tr></tbody></table></div>
+      <p class="hint">Chars: 0-based · Words: 1-based · Times: seconds. Click a timestamp to visit that stage; click # for the view before a revision.</p>
+      <div id="ledger-scroll" class="ledger-scroll" role="region" aria-label="Revision ledger table" tabindex="0"><table id="ledger"><caption class="sr-only">Revision positions and writing/navigation timestamps</caption><thead id="ledger-head"></thead><tbody id="ledger-body"><tr><td colspan="11" class="ledger-empty">Generate after revising your text to see the ledger.</td></tr></tbody></table></div>
+      <section id="revision-viewer" class="revision-viewer" hidden aria-labelledby="visit-title">
+        <div class="visit-heading"><h3 id="visit-title">Revision preview</h3><span id="visit-progress" class="badge"></span><button class="text-button" id="visit-close">Close preview ×</button></div>
+        <div class="visit-toolbar"><div><button class="visit-button" id="visit-prev">← Previous revision</button><button class="visit-button" id="visit-next">Next revision →</button></div><div><button class="visit-button" id="visit-before" aria-pressed="true">Before</button><button class="visit-button" id="visit-after" aria-pressed="false">After</button></div></div>
+        <p id="visit-description" class="hint" aria-live="polite"></p>
+        <div id="visit-content" aria-label="Content of the current revision"></div>
+        <div id="visit-text" class="visit-text" tabindex="0" role="region" aria-label="Historical text at selected revision"></div>
+        <p class="hint visit-note">Historical preview. Highlighted text is the deletion before an edit or the insertion after it; a caret marks other points. First edit opens the text immediately before the revision, and Last edit opens the text after the whole revision.</p>
+      </section>
       <p class="hint ledger-note">A dash means no navigation was observed or a timestamp is unavailable. Spaces and line breaks separate words; positions in whitespace use the preceding word (or word 1 before the first word). Character offsets use UTF-16, as in ScriptLog and the editor.</p>
     </section>
     <section class="guide" aria-label="How it works">

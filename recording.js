@@ -33,11 +33,12 @@
     }
     build() {
       const model = new Engine(), rows = [];
-      for (const op of this.operations) {
+      for (const [operationIndex,op] of this.operations.entries()) {
         const prior = model.revision;
         model[op.kind](op.position,op.value);
         if (model.revision !== prior) rows.push({x:model.revision,sourceChars:null,targetChars:null,sourceWord:null,targetWord:null,
-          sourceLast:op.sourceLast,navigationStart:op.navigationStart,firstEdit:op.first,lastEdit:op.last});
+          sourceLast:op.sourceLast,navigationStart:op.navigationStart,firstEdit:op.first,lastEdit:op.last,
+          kind:op.kind,content:model.history.at(-1).value,operationIndex});
       }
       const byId = new Map(rows.map(row=>[row.x,row])); let position = 0;
       for (const token of model.tokens) {
@@ -49,6 +50,25 @@
       const wordAt = point => words.length ? Math.max(1,words.filter(w=>w.index <= point).length) : null;
       for (const row of rows) { row.sourceWord = wordAt(row.sourceChars); row.targetWord = wordAt(row.targetChars); }
       return {model,rows};
+    }
+    visit(revision, phase = 'before') {
+      if (!['source','navigation','before','after'].includes(phase)) throw new RangeError('Invalid revision phase');
+      const row = this.build().rows.find(row => row.x === revision);
+      if (!row) throw new RangeError('Unknown revision');
+      let text = '', source = 0;
+      for (const op of this.operations.slice(0,row.operationIndex)) {
+        text = op.kind === 'insert' ? text.slice(0,op.position)+op.value+text.slice(op.position) : text.slice(0,op.position)+text.slice(op.position+op.value);
+        source = op.position + (op.kind === 'insert' ? op.value.length : 0);
+      }
+      const op = this.operations[row.operationIndex];
+      let start = op.position, end = start;
+      if (phase === 'source' || phase === 'navigation') start = end = source;
+      else if (phase === 'before' && op.kind === 'delete') end += op.value;
+      else if (phase === 'after') {
+        if (op.kind === 'insert') { text=text.slice(0,start)+op.value+text.slice(start); end+=op.value.length; }
+        else text=text.slice(0,start)+text.slice(start+op.value);
+      }
+      return {text,start,end,kind:op.kind,phase,revision,time:row[{source:'sourceLast',navigation:'navigationStart',before:'firstEdit',after:'lastEdit'}[phase]]};
     }
     static fromScriptLog(data) {
       if (!Array.isArray(data) || !Array.isArray(data[0]) || !Array.isArray(data[1]) || !data[0][0]) throw new Error('Expected ScriptLog metadata and event arrays.');
@@ -72,13 +92,14 @@
     }
   }
   const ledgerColumns = [
-    ['x','x'],['sourceChars','source_point (chars, 0-based)'],['targetChars','target_point (chars, 0-based)'],
-    ['sourceWord','source_point (word index, 1-based)'],['targetWord','target_point (word index, 1-based)'],
-    ['sourceLast','last writing edit at source (s)'],['navigationStart','navigation start |x (s)'],
-    ['firstEdit','first edit at target (s)'],['lastEdit','last edit x (s)']
+    ['x','#','Revision number'],['kind','Edit','Revision type'],['content','Content','Full inserted or deleted text'],
+    ['sourceChars','Source ch.','source_point (chars, 0-based)'],['targetChars','Target ch.','target_point (chars, 0-based)'],
+    ['sourceWord','Source wd.','source_point (word index, 1-based)'],['targetWord','Target wd.','target_point (word index, 1-based)'],
+    ['sourceLast','Source edit','last writing edit at source (s)'],['navigationStart','Nav start','navigation start |x (s)'],
+    ['firstEdit','First edit','first edit at target (s)'],['lastEdit','Last edit','last edit x (s)']
   ];
-  const ledgerValue = (key,value) => value == null ? '-' : ['sourceLast','navigationStart','firstEdit','lastEdit'].includes(key) ? value.toFixed(3) : String(value);
-  const ledgerCSV = rows => [ledgerColumns.map(([,title])=>title),...rows.map(row=>ledgerColumns.map(([key])=>ledgerValue(key,row[key])))].map(row=>row.map(value=>'"'+value.replaceAll('"','""')+'"').join(',')).join('\r\n');
+  const ledgerValue = (key,value) => value == null ? '-' : key === 'kind' ? (value === 'insert' ? 'Insert' : 'Delete') : ['sourceLast','navigationStart','firstEdit','lastEdit'].includes(key) ? value.toFixed(3) : String(value);
+  const ledgerCSV = rows => [ledgerColumns.map(([,title,description])=>description || title),...rows.map(row=>ledgerColumns.map(([key])=>ledgerValue(key,row[key])))].map(row=>row.map(value=>'"'+value.replaceAll('"','""')+'"').join(',')).join('\r\n');
   root.RevisionRecording=RevisionRecording;root.ledgerColumns=ledgerColumns;root.ledgerValue=ledgerValue;root.ledgerCSV=ledgerCSV;
   if(typeof module!=='undefined') module.exports={RevisionRecording,ledgerColumns,ledgerValue,ledgerCSV};
 })(typeof window!=='undefined'?window:globalThis);

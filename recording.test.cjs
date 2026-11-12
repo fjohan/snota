@@ -11,10 +11,10 @@ const expected=[
  [5,31,43,7,9,102.966,104.517,105.750,105.750],
  [6,43,52,9,11,105.750,107.821,109.382,109.382]
 ];
-assert.deepEqual(rows.map(r=>Object.values(r)),expected,'Every cell matches the supplied revision ledger');
+assert.deepEqual(rows.map(r=>['x','sourceChars','targetChars','sourceWord','targetWord','sourceLast','navigationStart','firstEdit','lastEdit'].map(key=>r[key])),expected,'Every cell matches the supplied revision ledger');
 assert.equal(model.toPlain(),'vi redi[sh]₁|₂{g}₂|₃erar in{n}₃e i orden|₁\n\nvi {r}₄|₅edigerar i {b}₅|₆örjan av [b]₆orden|₄\n\n');
 assert.equal(ledgerValue('lastEdit',22.110),'22.110');assert.equal(ledgerValue('navigationStart',null),'-');
-const csv=ledgerCSV(rows);assert.equal(csv.split('\r\n').length,7);assert.ok(csv.includes('"2","7","8","2","2","22.110","-","22.166","22.166"'));
+const csv=ledgerCSV(rows);assert.equal(csv.split('\r\n').length,7);assert.ok(csv.includes('"2","Insert","g","7","8","2","2","22.110","-","22.166","22.166"'));
 const live=new RevisionRecording();live.edit(0,0,'abcd',1);live.navigate(4,4,1.001);live.navigate(2,2,2);live.edit(1,1,'',3);live.navigate(1,1,3.001);live.edit(0,1,'',4);live.edit(0,0,'Z',5);
 const lr=live.build().rows;assert.equal(lr.length,2);assert.equal(lr[0].firstEdit,3);assert.equal(lr[0].lastEdit,4);assert.equal(lr[0].navigationStart,2);assert.equal(lr[1].sourceLast,4);assert.equal(lr[1].navigationStart,null);
 // Later edits move the ledger points with the notation markers.
@@ -28,3 +28,18 @@ assert.throws(()=>RevisionRecording.fromScriptLog([[{}],[{event:'<keyPressed>',r
 // Continue an imported recording without changing historic timings.
 rec.endGroup();rec.edit(model.text.length,0,'continued',rec.duration+1);assert.deepEqual(rec.build().rows,rows);
 console.log('Passed: exact ScriptLog notation and all 54 ledger cells, CSV precision, live grouping/navigation, moving markers, absent times, validation, and continuation.');
+
+assert.deepEqual(rows.map(row=>[row.kind,row.content]),[['delete','sh'],['insert','g'],['insert','n'],['insert','r'],['insert','b'],['delete','b']]);
+const replay=RevisionRecording.fromScriptLog(data);
+const b1=replay.visit(1,'before'),a1=replay.visit(1,'after');
+assert.equal(b1.text,'vi redisherar ine i orden');assert.equal(b1.text.slice(b1.start,b1.end),'sh');assert.equal(a1.text,'vi redierar ine i orden');assert.equal(a1.start,a1.end);
+const source=replay.visit(1,'source');assert.equal(source.start,25);assert.equal(source.time,15.887);assert.equal(replay.visit(1,'navigation').time,17.597);
+assert.equal(replay.visit(2,'before').text,a1.text);assert.equal(replay.visit(2,'after').text,'vi redigerar ine i orden');
+assert.equal(replay.visit(4,'before').text,'vi redigerar inne i orden\n\nvi edigerar i örjan av borden');
+const a4=replay.visit(4,'after');assert.equal(a4.text.slice(a4.start,a4.end),'r');assert.equal(a4.start,30);assert.equal(a4.end,31);
+assert.equal(replay.visit(6,'before').text.slice(52,53),'b');assert.equal(replay.visit(6,'after').text,'vi redigerar inne i orden\n\nvi redigerar i början av orden');
+assert.throws(()=>replay.visit(999),RangeError);assert.throws(()=>replay.visit(1,'invalid'),RangeError);
+const complex=new RevisionRecording();complex.edit(0,0,'abcd',1);complex.navigate(1,1,2);complex.edit(1,0,'hello',3);complex.navigate(0,0,4);complex.edit(0,7,'',5);
+assert.equal(complex.build().rows[1].content,'ahellob');assert.equal(complex.visit(2,'before').text,'ahellobcd');assert.equal(complex.visit(2,'after').text,'cd');
+const quoted=new RevisionRecording('rest');quoted.edit(0,0,'"a,b"\n',1);assert.ok(ledgerCSV(quoted.build().rows).includes('""a,b""'));
+console.log('Passed content and historical replay: before/after, grouped deletion, source/navigation, intervening production, removed insertions, and full CSV quoting.');
